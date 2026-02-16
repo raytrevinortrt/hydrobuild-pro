@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HydroBuild Pro - Professional Edition</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #0a1f1a 0%, #051209 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    
+    .container { max-width: 1400px; margin: 0 auto; }
+    
+    h1 { color: #00ff88; font-size: 32px; margin-bottom: 20px; }
+    
+    .status-bar {
+      background: rgba(0,255,136,0.1);
+      border: 2px solid rgba(0,255,136,0.3);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      font-size: 16px;
+    }
+    
+    .status-bar strong { color: #00ff88; }
+    
+    .toolbar {
+      background: rgba(0,255,136,0.05);
+      border: 2px solid rgba(0,255,136,0.2);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    button {
+      background: rgba(0,255,136,0.2);
+      border: 2px solid rgba(0,255,136,0.4);
+      color: #e0e0e0;
+      padding: 12px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    button:hover {
+      background: rgba(0,255,136,0.3);
+      border-color: #00ff88;
+      transform: translateY(-1px);
+    }
+    
+    button.active {
+      background: #00ff88;
+      color: #0a1612;
+      border-color: #00ff88;
+    }
+    
+    button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    #canvas {
+      border: 3px solid rgba(0,255,136,0.4);
+      border-radius: 8px;
+      cursor: crosshair;
+      display: block;
+      width: 100%;
+      background: #1a2f27;
+      margin-bottom: 20px;
+    }
+    
+    .equipment-panel {
+      background: rgba(0,255,136,0.05);
+      border: 2px solid rgba(0,255,136,0.2);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    
+    .equipment-panel.show { display: block; }
+    
+    .equipment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .eq-btn {
+      background: rgba(0,255,136,0.1);
+      border: 2px solid rgba(0,255,136,0.3);
+      padding: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+    
+    .eq-btn:hover { border-color: #00ff88; }
+    .eq-btn.active { background: #00ff88; color: #0a1612; }
+    
+    .eq-name { font-weight: 600; font-size: 13px; margin-bottom: 4px; }
+    .eq-specs { font-size: 11px; opacity: 0.8; }
+    
+    .stats {
+      background: rgba(0,255,136,0.05);
+      border: 2px solid rgba(0,255,136,0.2);
+      padding: 15px;
+      border-radius: 8px;
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+    
+    .stat-box {
+      background: rgba(0,255,136,0.1);
+      padding: 15px;
+      border-radius: 6px;
+      min-width: 120px;
+    }
+    
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #00ff88;
+    }
+    
+    .stat-label {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-top: 5px;
+    }
+    
+    .message {
+      padding: 12px;
+      border-radius: 6px;
+      margin: 10px 0;
+      display: none;
+    }
+    
+    .message.show { display: block; }
+    .message.success {
+      background: rgba(0,255,136,0.1);
+      border: 2px solid rgba(0,255,136,0.3);
+      color: #00ff88;
+    }
+    .message.alert {
+      background: rgba(255,165,0,0.1);
+      border: 2px solid rgba(255,165,0,0.3);
+      color: #ffa500;
+    }
+    
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.show {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: #0a1612;
+      border: 3px solid #00ff88;
+      border-radius: 12px;
+      padding: 30px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    
+    .modal-content h2 {
+      color: #00ff88;
+      margin-bottom: 20px;
+    }
+    
+    .modal-content textarea {
+      width: 100%;
+      min-height: 200px;
+      background: #1a2f27;
+      border: 2px solid rgba(0,255,136,0.3);
+      color: #e0e0e0;
+      padding: 15px;
+      border-radius: 6px;
+      font-family: monospace;
+      font-size: 12px;
+      resize: vertical;
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    
+    .modal-buttons button {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💧 HydroBuild Pro</h1>
+    
+    <div class="status-bar">
+      <strong>Current Step:</strong> <span id="current-step">Draw Property Boundary</span><br>
+      <span id="instruction">Click on the canvas below to add boundary points. You need at least 3 points.</span>
+    </div>
+    
+    <div class="toolbar">
+      <button id="btn-draw-boundary" class="active">1. Draw Boundary</button>
+      <button id="btn-finish-boundary" disabled>Finish Boundary</button>
+      <button id="btn-place-heads" disabled>2. Place Heads</button>
+      <button id="btn-place-valves" disabled>3. Place Valves</button>
+      <button id="btn-draw-drip-bed" disabled>Draw Drip Bed</button>
+      <button id="btn-finish-drip-bed" disabled>Finish Drip Bed</button>
+      <button id="btn-generate-zones" disabled>4. Generate Zones</button>
+      <button id="btn-materials" disabled>Materials & Pricing</button>
+      <button id="btn-export-pdf" disabled>Export PDF</button>
+      <button id="btn-clear-all">Clear All</button>
+      <button id="btn-undo">Undo</button>
+      <button id="btn-export">Export Code</button>
+      <button id="btn-import">Import Code</button>
+    </div>
+    
+    <div class="message" id="message"></div>
+    
+    <div class="equipment-panel" id="equipment-panel">
+      <h3 style="color: #00ff88; margin-bottom: 10px;">Select Head Type</h3>
+      <div class="equipment-grid" id="equipment-grid"></div>
+    </div>
+    
+    <canvas id="canvas" width="1200" height="700"></canvas>
+    
+    <div class="stats">
+      <div class="stat-box">
+        <div class="stat-value" id="stat-boundary">0</div>
+        <div class="stat-label">Boundary Points</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-heads">0</div>
+        <div class="stat-label">Heads Placed</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-valves">0</div>
+        <div class="stat-label">Valves Placed</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-value" id="stat-zones">0</div>
+        <div class="stat-label">Zones Created</div>
+      </div>
+    </div>
+    
+    <div style="background: rgba(0,255,136,0.05); border: 2px solid rgba(0,255,136,0.2); padding: 20px; border-radius: 8px; margin-top: 20px;">
+      <h3 style="color: #00ff88; margin-bottom: 15px; font-size: 18px;">🎨 Color Legend</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 20px; height: 20px; border-radius: 50%; background: #2196F3; border: 2px solid #fff;"></div>
+          <span><strong style="color: #2196F3;">Sprays</strong> - Fixed spray heads (4-15ft)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 20px; height: 20px; border-radius: 50%; background: #9C27B0; border: 2px solid #fff;"></div>
+          <span><strong style="color: #9C27B0;">Rotors</strong> - Rotating heads (18-35ft)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 20px; height: 20px; border-radius: 50%; background: #009688; border: 2px solid #fff;"></div>
+          <span><strong style="color: #009688;">MP Rotary</strong> - Multi-stream nozzles (8-20ft)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 20px; height: 20px; border-radius: 50%; background: #FF9800; border: 2px solid #fff;"></div>
+          <span><strong style="color: #FF9800;">Bubblers</strong> - Tree/shrub watering (2-3ft)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 30px; height: 20px; border: 3px solid #795548; background: rgba(121, 85, 72, 0.3); border-radius: 3px; position: relative;">
+            <div style="position: absolute; inset: 6px; background: #1a2f27; border-radius: 1px;"></div>
+          </div>
+          <span><strong style="color: #795548;">Drip Bed</strong> - Perimeter flower bed strip</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 24px; height: 24px; border-radius: 50%; background: #000; border: 2px solid #fff; position: relative; display: flex; align-items: center; justify-content: center;">
+            <svg width="16" height="16" viewBox="0 0 16 16" style="position: absolute;">
+              <line x1="3" y1="3" x2="13" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+              <line x1="13" y1="3" x2="3" y2="13" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <span><strong style="color: #000;">Valves</strong> - Zone control valves</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <div style="width: 20px; height: 20px; border: 3px solid #00d9ff; background: rgba(0,217,255,0.1); border-radius: 3px;"></div>
+          <span><strong style="color: #00d9ff;">Boundary</strong> - Property outline</span>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Import/Export Modal -->
+    <div class="modal" id="modal">
+      <div class="modal-content">
+        <h2 id="modal-title">Export Design Code</h2>
+        <p id="modal-instruction" style="color: #888; margin-bottom: 15px;">Copy this code to save your design. Paste it back to load it later.</p>
+        <textarea id="modal-textarea" placeholder="Paste your design code here..."></textarea>
+        <div class="modal-buttons">
+          <button id="modal-copy" style="display:none;">Copy Code</button>
+          <button id="modal-load" style="display:none;">Load Design</button>
+          <button id="modal-close">Close</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Materials & Pricing Modal -->
+    <div class="modal" id="materials-modal">
+      <div class="modal-content" style="max-width: 800px;">
+        <h2 style="color: #00ff88; margin-bottom: 20px;">📋 Materials Takeoff & Pricing</h2>
+        <div id="materials-content" style="max-height: 60vh; overflow-y: auto;"></div>
+        <div class="modal-buttons" style="margin-top: 20px;">
+          <button id="materials-close">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    console.log('🚀 HydroBuild starting...');
+    
+    // App state
+    const app = {
+      mode: 'boundary',
+      boundaryPoints: [],
+      heads: [],
+      valves: [],
+      zones: [],
+      dripLines: [],
+      dripBeds: [], // Array to hold multiple drip bed outlines
+      currentDripBed: [], // Points for drip bed being drawn
+      selectedHead: null,
+      history: []
+    };
+    
+    // Equipment database
+    const equipment = {
+      sprays: [
+        { id: 's4', name: 'Spray 4ft', r: 4, gpm: 0.4, color: '#2196F3' },
+        { id: 's6', name: 'Spray 6ft', r: 6, gpm: 0.65, color: '#2196F3' },
+        { id: 's8', name: 'Spray 8ft', r: 8, gpm: 1.0, color: '#2196F3' },
+        { id: 's10', name: 'Spray 10ft', r: 10, gpm: 1.3, color: '#2196F3' },
+        { id: 's12', name: 'Spray 12ft', r: 12, gpm: 1.8, color: '#2196F3' },
+        { id: 's15', name: 'Spray 15ft', r: 15, gpm: 2.4, color: '#2196F3' }
+      ],
+      rotors: [
+        { id: 'r18', name: 'Rotor 18ft', r: 18, gpm: 2.1, color: '#9C27B0' },
+        { id: 'r20', name: 'Rotor 20ft', r: 20, gpm: 2.4, color: '#9C27B0' },
+        { id: 'r25', name: 'Rotor 25ft', r: 25, gpm: 4.0, color: '#9C27B0' },
+        { id: 'r30', name: 'Rotor 30ft', r: 30, gpm: 4.8, color: '#9C27B0' },
+        { id: 'r35', name: 'Rotor 35ft', r: 35, gpm: 6.5, color: '#9C27B0' }
+      ],
+      mp: [
+        { id: 'm8', name: 'MP 8ft', r: 8, gpm: 0.26, color: '#009688' },
+        { id: 'm10', name: 'MP 10ft', r: 10, gpm: 0.35, color: '#009688' },
+        { id: 'm15', name: 'MP 15ft', r: 15, gpm: 0.8, color: '#009688' },
+        { id: 'm20', name: 'MP 20ft', r: 20, gpm: 1.2, color: '#009688' }
+      ],
+      bubblers: [
+        { id: 'b1', name: 'Bubbler 1', r: 2, gpm: 0.5, color: '#FF9800' },
+        { id: 'b2', name: 'Bubbler 2', r: 2, gpm: 1.0, color: '#FF9800' },
+        { id: 'b4', name: 'Bubbler 4', r: 3, gpm: 2.0, color: '#FF9800' }
+      ],
+      drip: [
+        { id: 'd1', name: 'Drip 6"', r: 1, gpm: 0.5, color: '#795548' },
+        { id: 'd2', name: 'Drip 12"', r: 1, gpm: 0.25, color: '#795548' }
+      ]
+    };
+    
+    const allEquipment = [...equipment.sprays, ...equipment.rotors, ...equipment.mp, ...equipment.bubblers, ...equipment.drip];
+    
+    // Canvas setup
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    console.log('✅ Canvas ready:', canvas.width, 'x', canvas.height);
+    
+    // Draw function
+    function draw() {
+      // Clear
+      ctx.fillStyle = '#1a2f27';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Grid
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 50) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 50) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      
+      // Boundary
+      if (app.boundaryPoints.length > 0) {
+        ctx.strokeStyle = '#00d9ff';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(app.boundaryPoints[0].x, app.boundaryPoints[0].y);
+        app.boundaryPoints.forEach(p => ctx.lineTo(p.x, p.y));
+        if (app.mode !== 'boundary') {
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(0,217,255,0.1)';
+          ctx.fill();
+        }
+        ctx.stroke();
+        
+        // Points
+        app.boundaryPoints.forEach((p, i) => {
+          ctx.fillStyle = '#00d9ff';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(i + 1, p.x, p.y - 12);
+        });
+      }
+      
+      // Heads
+      app.heads.forEach(head => {
+        const eq = allEquipment.find(e => e.id === head.type);
+        if (!eq) return;
+        
+        // Coverage
+        ctx.strokeStyle = eq.color + '80';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, eq.r * 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Head
+        ctx.fillStyle = eq.color;
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+      
+      // Valves (black circle with white X)
+      app.valves.forEach(valve => {
+        // Black circle
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(valve.x, valve.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // White border
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // White X
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = 'round';
+        
+        // Draw X (two diagonal lines)
+        ctx.beginPath();
+        ctx.moveTo(valve.x - 6, valve.y - 6);
+        ctx.lineTo(valve.x + 6, valve.y + 6);
+        ctx.stroke();
+        
+        ctx.beginPath();
+        ctx.moveTo(valve.x + 6, valve.y - 6);
+        ctx.lineTo(valve.x - 6, valve.y + 6);
+        ctx.stroke();
+      });
+      
+      // Finished drip beds
+      app.dripBeds.forEach(bed => {
+        if (bed.points.length >= 3) {
+          // Fill the drip bed area
+          ctx.beginPath();
+          ctx.moveTo(bed.points[0].x, bed.points[0].y);
+          bed.points.forEach(p => ctx.lineTo(p.x, p.y));
+          ctx.closePath();
+          
+          ctx.fillStyle = 'rgba(121, 85, 72, 0.3)';
+          ctx.fill();
+          
+          // Border
+          ctx.strokeStyle = '#795548';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+          
+          // Emitter dots
+          for (let i = 0; i < bed.points.length; i++) {
+            const p1 = bed.points[i];
+            const p2 = bed.points[(i + 1) % bed.points.length];
+            const dx = p2.x - p1.x;
+            const dy = p2.y - p1.y;
+            const segmentLength = Math.sqrt(dx * dx + dy * dy);
+            const steps = Math.floor(segmentLength / 20);
+            
+            for (let j = 0; j < steps; j++) {
+              const t = j / steps;
+              const ex = p1.x + dx * t;
+              const ey = p1.y + dy * t;
+              
+              ctx.fillStyle = '#5D4037';
+              ctx.beginPath();
+              ctx.arc(ex, ey, 2, 0, Math.PI * 2);
+              ctx.fill();
+            }
+          }
+        }
+      });
+      
+      // Current drip bed being drawn
+      if (app.currentDripBed.length > 0) {
+        ctx.strokeStyle = '#795548';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.moveTo(app.currentDripBed[0].x, app.currentDripBed[0].y);
+        app.currentDripBed.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Draw points
+        app.currentDripBed.forEach((p, i) => {
+          ctx.fillStyle = '#795548';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+          
+          ctx.fillStyle = '#fff';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText(i + 1, p.x, p.y - 12);
+        });
+      }
+    }
+    
+    // Helper function: Check if point is inside polygon
+    function isPointInPolygon(x, y, polygon) {
+      let inside = false;
+      for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+        const xi = polygon[i].x, yi = polygon[i].y;
+        const xj = polygon[j].x, yj = polygon[j].y;
+        
+        const intersect = ((yi > y) !== (yj > y))
+            && (x < (xj - xi) * (y - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+    
+    // Canvas click
+    canvas.addEventListener('click', function(e) {
+      console.log('🖱️ Canvas clicked!');
+      
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      
+      console.log('Position:', Math.round(x), Math.round(y));
+      console.log('Mode:', app.mode);
+      
+      if (app.mode === 'boundary') {
+        app.boundaryPoints.push({ x, y });
+        console.log('✅ Point added! Total:', app.boundaryPoints.length);
+        updateStats();
+        draw();
+        
+        if (app.boundaryPoints.length >= 3) {
+          document.getElementById('btn-finish-boundary').disabled = false;
+          showMessage('Great! You have ' + app.boundaryPoints.length + ' points. Click "Finish Boundary" when done.', 'success');
+        }
+      } else if (app.mode === 'drip-bed') {
+        app.currentDripBed.push({ x, y });
+        console.log('✅ Drip bed point added! Total:', app.currentDripBed.length);
+        draw();
+        
+        if (app.currentDripBed.length >= 3) {
+          document.getElementById('btn-finish-drip-bed').disabled = false;
+          showMessage('Drip bed: ' + app.currentDripBed.length + ' points. Click "Finish Drip Bed" when done.', 'success');
+        }
+      } else if (app.mode === 'head' && app.selectedHead) {
+        app.heads.push({ x, y, type: app.selectedHead });
+        console.log('✅ Head placed!');
+        updateStats();
+        draw();
+        showMessage('Head placed!', 'success');
+      } else if (app.mode === 'valve') {
+        app.valves.push({ x, y });
+        console.log('✅ Valve placed!');
+        updateStats();
+        draw();
+        showMessage('Valve placed!', 'success');
+      }
+    });
+    
+    // Button: Draw Boundary
+    document.getElementById('btn-draw-boundary').addEventListener('click', function() {
+      app.mode = 'boundary';
+      updateUI();
+      showMessage('Click on canvas to add boundary points', 'success');
+    });
+    
+    // Button: Finish Boundary
+    document.getElementById('btn-finish-boundary').addEventListener('click', function() {
+      if (app.boundaryPoints.length >= 3) {
+        app.mode = 'head';
+        document.getElementById('btn-place-heads').disabled = false;
+        document.getElementById('btn-place-valves').disabled = false;
+        document.getElementById('btn-draw-drip-bed').disabled = false;
+        updateUI();
+        draw();
+        showMessage('✓ Boundary complete! Now place irrigation heads or draw drip beds.', 'success');
+      }
+    });
+    
+    // Button: Draw Drip Bed
+    document.getElementById('btn-draw-drip-bed').addEventListener('click', function() {
+      app.mode = 'drip-bed';
+      app.currentDripBed = [];
+      updateUI();
+      showMessage('Click to draw your drip bed outline (foundation bed, flower bed, etc.)', 'success');
+    });
+    
+    // Button: Finish Drip Bed
+    document.getElementById('btn-finish-drip-bed').addEventListener('click', function() {
+      if (app.currentDripBed.length >= 3) {
+        app.dripBeds.push({
+          points: [...app.currentDripBed],
+          id: 'drip-' + Date.now()
+        });
+        app.currentDripBed = [];
+        document.getElementById('btn-finish-drip-bed').disabled = true;
+        app.mode = 'head';
+        updateUI();
+        draw();
+        showMessage('✓ Drip bed complete! Draw another or continue with heads.', 'success');
+      }
+    });
+    
+    // Button: Place Heads
+    document.getElementById('btn-place-heads').addEventListener('click', function() {
+      app.mode = 'head';
+      updateUI();
+      showMessage('Select a head type below, then click on canvas', 'success');
+    });
+    
+    // Button: Place Valves
+    document.getElementById('btn-place-valves').addEventListener('click', function() {
+      app.mode = 'valve';
+      updateUI();
+      showMessage('Click on canvas to place valves', 'success');
+    });
+    
+    // Button: Generate Zones
+    document.getElementById('btn-generate-zones').addEventListener('click', function() {
+      if (app.heads.length === 0) {
+        showMessage('Place some heads first!', 'alert');
+        return;
+      }
+      
+      // Simple zoning
+      const zones = Math.ceil(app.heads.length / 6);
+      app.zones = new Array(zones).fill(0);
+      
+      document.getElementById('btn-generate-zones').disabled = false;
+      updateStats();
+      showMessage('✓ Created ' + zones + ' zones!', 'success');
+    });
+    
+    // Button: Clear All
+    document.getElementById('btn-clear-all').addEventListener('click', function() {
+      if (confirm('Clear everything?')) {
+        app.boundaryPoints = [];
+        app.heads = [];
+        app.valves = [];
+        app.zones = [];
+        app.dripLines = [];
+        app.dripBeds = [];
+        app.currentDripBed = [];
+        app.mode = 'boundary';
+        document.getElementById('btn-finish-boundary').disabled = true;
+        document.getElementById('btn-place-heads').disabled = true;
+        document.getElementById('btn-place-valves').disabled = true;
+        document.getElementById('btn-draw-drip-bed').disabled = true;
+        document.getElementById('btn-finish-drip-bed').disabled = true;
+        document.getElementById('btn-generate-zones').disabled = true;
+        updateStats();
+        updateUI();
+        draw();
+        showMessage('Cleared!', 'success');
+      }
+    });
+    
+    // Button: Undo
+    document.getElementById('btn-undo').addEventListener('click', function() {
+      if (app.mode === 'boundary' && app.boundaryPoints.length > 0) {
+        app.boundaryPoints.pop();
+      } else if (app.mode === 'head' && app.heads.length > 0) {
+        app.heads.pop();
+      } else if (app.mode === 'valve' && app.valves.length > 0) {
+        app.valves.pop();
+      }
+      updateStats();
+      draw();
+      showMessage('Undone!', 'success');
+    });
+    
+    // Button: Export
+    document.getElementById('btn-export').addEventListener('click', function() {
+      const exportData = {
+        version: '1.0',
+        boundaryPoints: app.boundaryPoints,
+        heads: app.heads,
+        valves: app.valves,
+        dripLines: app.dripLines,
+        dripBeds: app.dripBeds,
+        zones: app.zones,
+        timestamp: new Date().toISOString()
+      };
+      
+      const code = btoa(JSON.stringify(exportData)); // Encode to base64
+      
+      document.getElementById('modal-title').textContent = 'Export Design Code';
+      document.getElementById('modal-instruction').textContent = 'Copy this code to save your design. Share it with Claude or paste it back later to load.';
+      document.getElementById('modal-textarea').value = code;
+      document.getElementById('modal-copy').style.display = 'block';
+      document.getElementById('modal-load').style.display = 'none';
+      document.getElementById('modal').classList.add('show');
+      
+      console.log('📤 Export data:', exportData);
+    });
+    
+    // Button: Import
+    document.getElementById('btn-import').addEventListener('click', function() {
+      document.getElementById('modal-title').textContent = 'Import Design Code';
+      document.getElementById('modal-instruction').textContent = 'Paste the design code from Claude or a previous export.';
+      document.getElementById('modal-textarea').value = '';
+      document.getElementById('modal-copy').style.display = 'none';
+      document.getElementById('modal-load').style.display = 'block';
+      document.getElementById('modal').classList.add('show');
+    });
+    
+    // Modal: Close
+    document.getElementById('modal-close').addEventListener('click', function() {
+      document.getElementById('modal').classList.remove('show');
+    });
+    
+    // Modal: Copy Code
+    document.getElementById('modal-copy').addEventListener('click', function() {
+      const textarea = document.getElementById('modal-textarea');
+      textarea.select();
+      document.execCommand('copy');
+      showMessage('✓ Code copied to clipboard!', 'success');
+    });
+    
+    // Modal: Load Design
+    document.getElementById('modal-load').addEventListener('click', function() {
+      const code = document.getElementById('modal-textarea').value.trim();
+      
+      if (!code) {
+        showMessage('Please paste a design code first!', 'alert');
+        return;
+      }
+      
+      try {
+        const decoded = JSON.parse(atob(code)); // Decode from base64
+        
+        console.log('📥 Import data:', decoded);
+        
+        // Load the data
+        app.boundaryPoints = decoded.boundaryPoints || [];
+        app.heads = decoded.heads || [];
+        app.valves = decoded.valves || [];
+        app.dripLines = decoded.dripLines || [];
+        app.dripBeds = decoded.dripBeds || [];
+        app.zones = decoded.zones || [];
+        
+        // Update UI
+        if (app.boundaryPoints.length >= 3) {
+          document.getElementById('btn-finish-boundary').disabled = false;
+          document.getElementById('btn-place-heads').disabled = false;
+          document.getElementById('btn-place-valves').disabled = false;
+          document.getElementById('btn-draw-drip-bed').disabled = false;
+        }
+        
+        if (app.heads.length > 0 && app.valves.length > 0) {
+          document.getElementById('btn-generate-zones').disabled = false;
+        }
+        
+        updateStats();
+        draw();
+        updateUI();
+        
+        document.getElementById('modal').classList.remove('show');
+        showMessage('✓ Design loaded successfully!', 'success');
+        
+      } catch (error) {
+        console.error('Import error:', error);
+        showMessage('❌ Invalid code! Make sure you pasted the complete code.', 'alert');
+      }
+    });
+    
+    // Close modal on background click
+    document.getElementById('modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('show');
+      }
+    });
+    
+    // Update UI
+    function updateUI() {
+      // Clear active buttons
+      document.querySelectorAll('.toolbar button').forEach(b => b.classList.remove('active'));
+      
+      if (app.mode === 'boundary') {
+        document.getElementById('btn-draw-boundary').classList.add('active');
+        document.getElementById('equipment-panel').classList.remove('show');
+        document.getElementById('current-step').textContent = 'Draw Property Boundary';
+        document.getElementById('instruction').textContent = 'Click on the canvas to add points. Need at least 3 points.';
+      } else if (app.mode === 'drip-bed') {
+        document.getElementById('btn-draw-drip-bed').classList.add('active');
+        document.getElementById('equipment-panel').classList.remove('show');
+        document.getElementById('current-step').textContent = 'Draw Drip Bed Outline';
+        document.getElementById('instruction').textContent = 'Click to outline your drip bed (foundation bed, flower bed, shrub area). Click "Finish Drip Bed" when done.';
+      } else if (app.mode === 'head') {
+        document.getElementById('btn-place-heads').classList.add('active');
+        document.getElementById('equipment-panel').classList.add('show');
+        populateEquipment();
+        document.getElementById('current-step').textContent = 'Place Irrigation Heads';
+        document.getElementById('instruction').textContent = 'Select a head type below, then click on canvas to place it.';
+      } else if (app.mode === 'valve') {
+        document.getElementById('btn-place-valves').classList.add('active');
+        document.getElementById('equipment-panel').classList.remove('show');
+        document.getElementById('current-step').textContent = 'Place Zone Valves';
+        document.getElementById('instruction').textContent = 'Click on canvas to place valve boxes.';
+      }
+    }
+    
+    // Populate equipment
+    function populateEquipment() {
+      const grid = document.getElementById('equipment-grid');
+      grid.innerHTML = '';
+      
+      const categories = [
+        { name: '💧 Sprays', items: equipment.sprays },
+        { name: '🌀 Rotors', items: equipment.rotors },
+        { name: '⚡ MP Rotary', items: equipment.mp },
+        { name: '💦 Bubblers', items: equipment.bubblers },
+        { name: '💧 Drip', items: equipment.drip }
+      ];
+      
+      categories.forEach(cat => {
+        const header = document.createElement('div');
+        header.style.gridColumn = '1 / -1';
+        header.style.color = '#00ff88';
+        header.style.fontWeight = 'bold';
+        header.style.marginTop = '10px';
+        header.textContent = cat.name;
+        grid.appendChild(header);
+        
+        cat.items.forEach(eq => {
+          const btn = document.createElement('button');
+          btn.className = 'eq-btn';
+          if (app.selectedHead === eq.id) btn.classList.add('active');
+          btn.innerHTML = `<div class="eq-name">${eq.name}</div><div class="eq-specs">${eq.r}ft • ${eq.gpm}gpm</div>`;
+          btn.onclick = function() {
+            app.selectedHead = eq.id;
+            populateEquipment();
+            showMessage('Selected: ' + eq.name, 'success');
+          };
+          grid.appendChild(btn);
+        });
+      });
+    }
+    
+    // Update stats
+    function updateStats() {
+      document.getElementById('stat-boundary').textContent = app.boundaryPoints.length;
+      document.getElementById('stat-heads').textContent = app.heads.length;
+      document.getElementById('stat-valves').textContent = app.valves.length;
+      document.getElementById('stat-zones').textContent = app.zones.length;
+      
+      if (app.heads.length > 0 && app.valves.length > 0) {
+        document.getElementById('btn-generate-zones').disabled = false;
+      }
+      
+      // Enable materials and PDF if we have heads
+      if (app.heads.length > 0) {
+        document.getElementById('btn-materials').disabled = false;
+        document.getElementById('btn-export-pdf').disabled = false;
+      }
+    }
+    
+    // Show message
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = 'message show ' + type;
+      setTimeout(() => msg.classList.remove('show'), 5000);
+    }
+    
+    // Button: Materials & Pricing
+    document.getElementById('btn-materials').addEventListener('click', function() {
+      const materials = calculateMaterials();
+      displayMaterials(materials);
+      document.getElementById('materials-modal').classList.add('show');
+    });
+    
+    // Modal: Close Materials
+    document.getElementById('materials-close').addEventListener('click', function() {
+      document.getElementById('materials-modal').classList.remove('show');
+    });
+    
+    document.getElementById('materials-modal').addEventListener('click', function(e) {
+      if (e.target === this) {
+        this.classList.remove('show');
+      }
+    });
+    
+    // Calculate Materials
+    function calculateMaterials() {
+      const headsByType = {};
+      let totalGPM = 0;
+      
+      app.heads.forEach(head => {
+        const eq = allEquipment.find(e => e.id === head.type);
+        if (eq) {
+          if (!headsByType[eq.name]) {
+            headsByType[eq.name] = { count: 0, gpm: eq.gpm, cost: 0, color: eq.color };
+          }
+          headsByType[eq.name].count++;
+          totalGPM += eq.gpm;
+        }
+      });
+      
+      // Calculate head costs (rough estimates)
+      Object.keys(headsByType).forEach(name => {
+        const item = headsByType[name];
+        if (name.includes('Spray')) item.cost = item.count * 8;
+        else if (name.includes('Rotor')) item.cost = item.count * 25;
+        else if (name.includes('MP')) item.cost = item.count * 12;
+        else if (name.includes('Bubbler')) item.cost = item.count * 15;
+        else if (name.includes('Drip')) item.cost = item.count * 3;
+      });
+      
+      const pipeLength = app.heads.length * 15;
+      const pipeCost = pipeLength * 0.50;
+      const valveCost = app.valves.length * 75;
+      
+      let dripBedArea = 0;
+      app.dripBeds.forEach(() => dripBedArea += 50);
+      const dripCost = dripBedArea * 2;
+      
+      const materialsCost = Object.values(headsByType).reduce((sum, item) => sum + item.cost, 0) + pipeCost + valveCost + dripCost;
+      const laborCost = materialsCost * 0.4;
+      
+      return {
+        heads: headsByType,
+        totalHeads: app.heads.length,
+        totalGPM,
+        pipeLength,
+        pipeCost,
+        valves: app.valves.length,
+        valveCost,
+        dripBeds: app.dripBeds.length,
+        dripBedArea,
+        dripCost,
+        zones: app.zones.length,
+        materialsCost,
+        laborCost,
+        totalCost: materialsCost + laborCost
+      };
+    }
+    
+    // Display Materials
+    function displayMaterials(m) {
+      let html = '<div style="font-size: 14px;">';
+      html += '<div style="background: rgba(0,255,136,0.1); padding: 15px; border-radius: 6px; margin-bottom: 20px;">';
+      html += '<h3 style="color: #00ff88; margin-bottom: 10px;">Project Summary</h3>';
+      html += `<p><strong>Total Heads:</strong> ${m.totalHeads}</p>`;
+      html += `<p><strong>Total GPM:</strong> ${m.totalGPM.toFixed(1)} gpm</p>`;
+      html += `<p><strong>Valves:</strong> ${m.valves}</p>`;
+      html += `<p><strong>Zones:</strong> ${m.zones || 'Not generated'}</p>`;
+      html += `<p><strong>Drip Beds:</strong> ${m.dripBeds} (≈${m.dripBedArea} sq ft)</p>`;
+      html += '</div>';
+      
+      html += '<h3 style="color: #00ff88; margin: 20px 0 10px 0;">Equipment List</h3>';
+      html += '<table style="width: 100%; border-collapse: collapse;">';
+      html += '<tr style="background: rgba(0,255,136,0.1);"><th style="text-align: left; padding: 8px;">Item</th><th style="text-align: center; padding: 8px;">Qty</th><th style="text-align: center; padding: 8px;">GPM</th><th style="text-align: right; padding: 8px;">Cost</th></tr>';
+      
+      Object.entries(m.heads).forEach(([name, item]) => {
+        html += `<tr><td style="padding: 8px;"><span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:${item.color};margin-right:8px;"></span>${name}</td><td style="text-align: center; padding: 8px;">${item.count}</td><td style="text-align: center; padding: 8px;">${(item.gpm * item.count).toFixed(1)}</td><td style="text-align: right; padding: 8px;">$${item.cost.toFixed(2)}</td></tr>`;
+      });
+      
+      html += `<tr><td style="padding: 8px;">PVC Pipe</td><td style="text-align: center; padding: 8px;">${m.pipeLength} ft</td><td style="text-align: center; padding: 8px;">-</td><td style="text-align: right; padding: 8px;">$${m.pipeCost.toFixed(2)}</td></tr>`;
+      html += `<tr><td style="padding: 8px;">Zone Valves</td><td style="text-align: center; padding: 8px;">${m.valves}</td><td style="text-align: center; padding: 8px;">-</td><td style="text-align: right; padding: 8px;">$${m.valveCost.toFixed(2)}</td></tr>`;
+      
+      if (m.dripBeds > 0) {
+        html += `<tr><td style="padding: 8px;">Drip System</td><td style="text-align: center; padding: 8px;">${m.dripBedArea} sq ft</td><td style="text-align: center; padding: 8px;">-</td><td style="text-align: right; padding: 8px;">$${m.dripCost.toFixed(2)}</td></tr>`;
+      }
+      
+      html += '</table>';
+      html += '<div style="background: rgba(0,255,136,0.1); padding: 15px; border-radius: 6px; margin-top: 20px;">';
+      html += '<h3 style="color: #00ff88; margin-bottom: 10px;">Pricing Estimate</h3>';
+      html += `<p style="display: flex; justify-content: space-between;"><span>Materials:</span><strong>$${m.materialsCost.toFixed(2)}</strong></p>`;
+      html += `<p style="display: flex; justify-content: space-between;"><span>Labor (40%):</span><strong>$${m.laborCost.toFixed(2)}</strong></p>`;
+      html += `<p style="display: flex; justify-content: space-between; font-size: 18px; color: #00ff88; margin-top: 10px; padding-top: 10px; border-top: 2px solid rgba(0,255,136,0.3);"><span>Total:</span><strong>$${m.totalCost.toFixed(2)}</strong></p>`;
+      html += '<p style="margin-top: 10px; font-size: 12px; color: #888;">* Estimate only. Actual costs vary.</p>';
+      html += '</div></div>';
+      
+      document.getElementById('materials-content').innerHTML = html;
+    }
+    
+    // Button: Export PDF
+    document.getElementById('btn-export-pdf').addEventListener('click', function() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.setTextColor(0, 255, 136);
+      doc.text('HydroBuild Pro - Irrigation Design', 20, 20);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(100);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 28);
+      
+      const canvasImg = canvas.toDataURL('image/png');
+      doc.addImage(canvasImg, 'PNG', 20, 35, 170, 100);
+      
+      const materials = calculateMaterials();
+      
+      doc.setFontSize(14);
+      doc.setTextColor(0, 255, 136);
+      doc.text('Project Summary', 20, 145);
+      
+      doc.setFontSize(10);
+      doc.setTextColor(0);
+      let y = 155;
+      doc.text(`Heads: ${materials.totalHeads} | GPM: ${materials.totalGPM.toFixed(1)} | Valves: ${materials.valves} | Zones: ${materials.zones || 0}`, 20, y);
+      
+      y += 15;
+      doc.setFontSize(14);
+      doc.setTextColor(0, 255, 136);
+      doc.text('Equipment & Pricing', 20, y);
+      
+      y += 10;
+      doc.setFontSize(9);
+      doc.setTextColor(0);
+      
+      Object.entries(materials.heads).forEach(([name, item]) => {
+        doc.text(`${name}: ${item.count} @ $${item.cost.toFixed(2)}`, 20, y);
+        y += 5;
+      });
+      
+      doc.text(`Pipe: ${materials.pipeLength} ft @ $${materials.pipeCost.toFixed(2)}`, 20, y);
+      y += 5;
+      doc.text(`Valves: ${materials.valves} @ $${materials.valveCost.toFixed(2)}`, 20, y);
+      
+      if (materials.dripBeds > 0) {
+        y += 5;
+        doc.text(`Drip: ${materials.dripBedArea} sq ft @ $${materials.dripCost.toFixed(2)}`, 20, y);
+      }
+      
+      y += 10;
+      doc.setFontSize(12);
+      doc.setTextColor(0, 255, 136);
+      doc.text(`Total: $${materials.totalCost.toFixed(2)} (Materials: $${materials.materialsCost.toFixed(2)} + Labor: $${materials.laborCost.toFixed(2)})`, 20, y);
+      
+      doc.save('hydrobuild-design.pdf');
+      showMessage('✓ PDF exported!', 'success');
+    });
+    
+    // Initialize
+    console.log('✅ HydroBuild ready!');
+    draw();
+    updateUI();
+    showMessage('Welcome! Click on canvas to start drawing your property boundary.', 'success');
+  </script>
+</body>
+</html>
