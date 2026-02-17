@@ -1,0 +1,1527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HydroBuild Pro - Professional Irrigation Design</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    :root {
+      --primary-blue: #1a73e8;
+      --secondary-teal: #00bfa5;
+      --accent-orange: #ff6b35;
+      --dark-bg: #0f1419;
+      --panel-bg: #1a1f2e;
+      --card-bg: #242b3d;
+      --text-primary: #ffffff;
+      --text-secondary: #8b92a7;
+      --border-color: #2d3448;
+      --success: #00c853;
+      --hover-bg: #2d3448;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--dark-bg);
+      color: var(--text-primary);
+      overflow: hidden;
+      height: 100vh;
+    }
+    
+    /* Welcome Screen */
+    #welcome-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+      transition: opacity 0.3s ease-out;
+    }
+    
+    #welcome-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .welcome-content {
+      text-align: center;
+      max-width: 600px;
+      padding: 40px;
+    }
+    
+    .logo {
+      font-size: 72px;
+      margin-bottom: 16px;
+      animation: float 3s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-10px); }
+    }
+    
+    .welcome-content h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .welcome-content p {
+      color: var(--text-secondary);
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+    
+    .welcome-buttons {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    
+    .welcome-btn {
+      padding: 16px 32px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .welcome-btn.primary {
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-teal));
+      color: white;
+    }
+    
+    .welcome-btn.primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(26, 115, 232, 0.4);
+    }
+    
+    .welcome-btn.secondary {
+      background: var(--card-bg);
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
+    }
+    
+    .welcome-btn.secondary:hover {
+      border-color: var(--primary-blue);
+      background: var(--panel-bg);
+    }
+    
+    /* Main Layout */
+    #app {
+      display: flex;
+      height: 100vh;
+      opacity: 0;
+      transition: opacity 0.3s ease-in;
+    }
+    
+    #app.visible {
+      opacity: 1;
+    }
+    
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--panel-bg);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 16px;
+      overflow-y: auto;
+    }
+    
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 32px;
+      padding: 0 8px;
+    }
+    
+    .sidebar-header .logo-icon {
+      font-size: 32px;
+    }
+    
+    .sidebar-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-teal));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .nav-section {
+      margin-bottom: 24px;
+    }
+    
+    .nav-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      padding: 0 12px;
+    }
+    
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: var(--text-primary);
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    
+    .nav-item:hover {
+      background: var(--hover-bg);
+    }
+    
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(26, 115, 232, 0.2), rgba(0, 191, 165, 0.2));
+      border-left: 3px solid var(--primary-blue);
+    }
+    
+    .nav-item .icon {
+      font-size: 20px;
+      width: 24px;
+      text-align: center;
+    }
+    
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    
+    /* Top Bar */
+    .top-bar {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .project-info h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    
+    .project-info p {
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .top-actions {
+      display: flex;
+      gap: 12px;
+    }
+    
+    .icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      border: none;
+      background: var(--card-bg);
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      transition: all 0.2s ease;
+    }
+    
+    .icon-btn:hover {
+      background: var(--hover-bg);
+      transform: translateY(-2px);
+    }
+    
+    .primary-btn {
+      padding: 10px 20px;
+      border-radius: 8px;
+      border: none;
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-teal));
+      color: white;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .primary-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(26, 115, 232, 0.4);
+    }
+    
+    /* Workspace */
+    .workspace {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    
+    /* Canvas Area */
+    .canvas-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--dark-bg);
+      position: relative;
+    }
+    
+    .tool-panel {
+      background: var(--panel-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px;
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+    }
+    
+    .tool-btn {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      background: var(--card-bg);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      white-space: nowrap;
+    }
+    
+    .tool-btn:hover {
+      border-color: var(--primary-blue);
+      background: var(--hover-bg);
+    }
+    
+    .tool-btn.active {
+      background: linear-gradient(135deg, rgba(26, 115, 232, 0.2), rgba(0, 191, 165, 0.2));
+      border-color: var(--primary-blue);
+    }
+    
+    .tool-btn .icon {
+      font-size: 18px;
+    }
+    
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    canvas {
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      cursor: crosshair;
+    }
+    
+    /* Properties Panel */
+    .properties-panel {
+      width: 320px;
+      background: var(--panel-bg);
+      border-left: 1px solid var(--border-color);
+      overflow-y: auto;
+      padding: 24px;
+    }
+    
+    .panel-section {
+      margin-bottom: 24px;
+    }
+    
+    .panel-section h4 {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 16px;
+    }
+    
+    .stat-card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+      border: 1px solid var(--border-color);
+      transition: all 0.2s ease;
+    }
+    
+    .stat-card:hover {
+      border-color: var(--primary-blue);
+      transform: translateX(4px);
+    }
+    
+    .stat-card .stat-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    
+    .stat-card .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    
+    .equipment-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-top: 12px;
+    }
+    
+    .equipment-card {
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .equipment-card:hover {
+      border-color: var(--primary-blue);
+      transform: scale(1.05);
+    }
+    
+    .equipment-card.selected {
+      border-color: var(--primary-blue);
+      background: rgba(26, 115, 232, 0.2);
+    }
+    
+    .equipment-card .eq-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      margin: 0 auto 8px;
+    }
+    
+    .equipment-card .eq-name {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 2px;
+    }
+    
+    .equipment-card .eq-info {
+      font-size: 9px;
+      color: var(--text-secondary);
+    }
+    
+    /* Status Bar */
+    .status-bar {
+      background: var(--panel-bg);
+      border-top: 1px solid var(--border-color);
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--success);
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(4px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal.show {
+      display: flex;
+    }
+    
+    .modal-content {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 600px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+      box-shadow: 0 16px 64px rgba(0, 0, 0, 0.6);
+    }
+    
+    .modal-content h2 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    
+    .modal-content input,
+    .modal-content textarea {
+      width: 100%;
+      padding: 12px;
+      background: var(--card-bg);
+      border: 2px solid var(--border-color);
+      color: var(--text-primary);
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: inherit;
+      margin: 12px 0;
+      transition: all 0.2s ease;
+    }
+    
+    .modal-content input:focus,
+    .modal-content textarea:focus {
+      outline: none;
+      border-color: var(--primary-blue);
+    }
+    
+    .modal-buttons {
+      display: flex;
+      gap: 12px;
+      margin-top: 24px;
+    }
+    
+    .modal-buttons button {
+      flex: 1;
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .modal-buttons button:first-child {
+      background: linear-gradient(135deg, var(--primary-blue), var(--secondary-teal));
+      color: white;
+    }
+    
+    .modal-buttons button:last-child {
+      background: var(--card-bg);
+      color: var(--text-primary);
+      border: 2px solid var(--border-color);
+    }
+    
+    /* Message Toast */
+    .message {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-primary);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 2000;
+      max-width: 400px;
+    }
+    
+    .message.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .message.success {
+      border-left: 4px solid var(--success);
+    }
+    
+    .message.alert {
+      border-left: 4px solid var(--accent-orange);
+    }
+    
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: var(--dark-bg);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+    
+    /* Hide file input */
+    input[type="file"] {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Welcome Screen -->
+  <div id="welcome-screen">
+    <div class="welcome-content">
+      <div class="logo">💧</div>
+      <h1>HydroBuild Pro</h1>
+      <p>Professional Irrigation Design Software</p>
+      <div class="welcome-buttons">
+        <button class="welcome-btn primary" onclick="startNewProject()">
+          <span>🚀</span> Start New Project
+        </button>
+        <button class="welcome-btn secondary" onclick="importProject()">
+          <span>📂</span> Load Existing
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app">
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span class="logo-icon">💧</span>
+        <h2>HydroBuild Pro</h2>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Design</div>
+        <div class="nav-item active" data-mode="boundary">
+          <span class="icon">🏠</span>
+          <span>Property</span>
+        </div>
+        <div class="nav-item" data-mode="mainline">
+          <span class="icon">📐</span>
+          <span>Mainline</span>
+        </div>
+        <div class="nav-item" data-mode="lateral">
+          <span class="icon">📏</span>
+          <span>Laterals</span>
+        </div>
+        <div class="nav-item" data-mode="head" onclick="setTimeout(forceShowEquipment, 100)">
+          <span class="icon">💧</span>
+          <span>Equipment</span>
+        </div>
+        <div class="nav-item" data-mode="valve">
+          <span class="icon">🔧</span>
+          <span>Valves</span>
+        </div>
+        <div class="nav-item" data-mode="drip">
+          <span class="icon">🌱</span>
+          <span>Drip Beds</span>
+        </div>
+      </div>
+      
+      <div class="nav-section">
+        <div class="nav-section-title">Actions</div>
+        <div class="nav-item" onclick="generateZones()">
+          <span class="icon">⚡</span>
+          <span>Generate Zones</span>
+        </div>
+        <div class="nav-item" onclick="showMaterials()">
+          <span class="icon">📊</span>
+          <span>Materials</span>
+        </div>
+        <div class="nav-item" onclick="exportPDF()">
+          <span class="icon">📄</span>
+          <span>Export PDF</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Top Bar -->
+      <div class="top-bar">
+        <div class="project-info">
+          <h3 id="project-name">New Project</h3>
+          <p id="project-status">Ready to design</p>
+        </div>
+        <div class="top-actions">
+          <button class="icon-btn" onclick="loadAddress()" title="Load Address">📍</button>
+          <button class="icon-btn" onclick="uploadPlotPlan()" title="Upload Plot Plan">📄</button>
+          <button class="icon-btn" onclick="undoAction()" title="Undo">↶</button>
+          <button class="primary-btn" onclick="saveProject()">
+            <span>💾</span> Save
+          </button>
+        </div>
+      </div>
+
+      <!-- Workspace -->
+      <div class="workspace">
+        <!-- Canvas Area -->
+        <div class="canvas-area">
+          <div class="tool-panel" id="tool-panel">
+            <!-- Tools populated dynamically -->
+          </div>
+          
+          <div class="canvas-container">
+            <canvas id="canvas" width="1200" height="700"></canvas>
+          </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <div class="properties-panel">
+          <div class="panel-section">
+            <h4>Project Stats</h4>
+            <div class="stat-card">
+              <div class="stat-label">Boundary Points</div>
+              <div class="stat-value" id="stat-boundary">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Heads</div>
+              <div class="stat-value" id="stat-heads">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Valves</div>
+              <div class="stat-value" id="stat-valves">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Zones</div>
+              <div class="stat-value" id="stat-zones">0</div>
+            </div>
+          </div>
+          
+          <div class="panel-section" id="equipment-panel" style="display: none;">
+            <h4>💧 Select Equipment</h4>
+            <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Choose a head type, then click on canvas to place</p>
+            <div class="equipment-grid" id="equipment-grid"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-left">
+          <div class="status-indicator">
+            <span class="status-dot"></span>
+            <span id="status-text">Ready</span>
+          </div>
+          <span>|</span>
+          <span id="instruction-text">Click to start drawing property boundary</span>
+        </div>
+        <div class="status-right">
+          <span>HydroBuild Pro v3.0</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal" id="address-modal">
+    <div class="modal-content">
+      <h2>Load Property Address</h2>
+      <p style="color: var(--text-secondary); margin-bottom: 16px;">Enter address to load satellite imagery</p>
+      <input type="text" id="address-input" placeholder="123 Main St, City, State ZIP">
+      <div class="modal-buttons">
+        <button onclick="loadAddressConfirm()">Load</button>
+        <button onclick="closeModal('address-modal')">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="materials-modal">
+    <div class="modal-content" style="max-width: 800px;">
+      <h2>Materials & Pricing</h2>
+      <div id="materials-content"></div>
+      <div class="modal-buttons">
+        <button onclick="closeModal('materials-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Message Toast -->
+  <div class="message" id="message"></div>
+
+  <!-- Hidden File Input -->
+  <input type="file" id="file-upload" accept=".pdf,image/*">
+  <input type="file" id="import-upload" accept=".json">
+
+  <script>
+    console.log('🚀 HydroBuild Pro v3.0 starting...');
+    
+    // API Configuration
+    const GOOGLE_MAPS_API_KEY = 'YOUR_API_KEY_HERE';
+    const USE_GOOGLE_MAPS = GOOGLE_MAPS_API_KEY !== 'YOUR_API_KEY_HERE';
+    
+    // Get canvas
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    // App state
+    const app = {
+      mode: 'boundary',
+      boundaryPoints: [],
+      heads: [],
+      valves: [],
+      zones: [],
+      dripBeds: [],
+      currentDripBed: [],
+      mainlines: [],
+      laterals: [],
+      currentMainline: [],
+      currentLateral: [],
+      selectedHead: null,
+      selectedMainlineSize: '1.5',
+      selectedLateralSize: '0.75',
+      backgroundImage: null,
+      backgroundOpacity: 0.5
+    };
+    
+    // Equipment database
+    const allEquipment = [
+      { id: 'spray-4', name: 'Spray 4ft', r: 4, gpm: 0.4, color: '#2196F3', category: 'spray' },
+      { id: 'spray-6', name: 'Spray 6ft', r: 6, gpm: 0.6, color: '#2196F3', category: 'spray' },
+      { id: 'spray-8', name: 'Spray 8ft', r: 8, gpm: 0.8, color: '#2196F3', category: 'spray' },
+      { id: 'spray-10', name: 'Spray 10ft', r: 10, gpm: 1.0, color: '#2196F3', category: 'spray' },
+      { id: 'spray-12', name: 'Spray 12ft', r: 12, gpm: 1.2, color: '#2196F3', category: 'spray' },
+      { id: 'spray-15', name: 'Spray 15ft', r: 15, gpm: 1.5, color: '#2196F3', category: 'spray' },
+      { id: 'rotor-18', name: 'Rotor 18ft', r: 18, gpm: 2.1, color: '#9C27B0', category: 'rotor' },
+      { id: 'rotor-22', name: 'Rotor 22ft', r: 22, gpm: 3.2, color: '#9C27B0', category: 'rotor' },
+      { id: 'rotor-25', name: 'Rotor 25ft', r: 25, gpm: 4.0, color: '#9C27B0', category: 'rotor' },
+      { id: 'rotor-30', name: 'Rotor 30ft', r: 30, gpm: 5.5, color: '#9C27B0', category: 'rotor' },
+      { id: 'rotor-35', name: 'Rotor 35ft', r: 35, gpm: 6.5, color: '#9C27B0', category: 'rotor' },
+      { id: 'mp-8', name: 'MP 8ft', r: 8, gpm: 0.26, color: '#009688', category: 'mp' },
+      { id: 'mp-12', name: 'MP 12ft', r: 12, gpm: 0.40, color: '#009688', category: 'mp' },
+      { id: 'mp-15', name: 'MP 15ft', r: 15, gpm: 0.60, color: '#009688', category: 'mp' },
+      { id: 'mp-20', name: 'MP 20ft', r: 20, gpm: 1.20, color: '#009688', category: 'mp' },
+      { id: 'bubbler-2', name: 'Bubbler 2ft', r: 2, gpm: 0.5, color: '#FF9800', category: 'bubbler' },
+      { id: 'bubbler-2.5', name: 'Bubbler 2.5ft', r: 2.5, gpm: 1.0, color: '#FF9800', category: 'bubbler' },
+      { id: 'bubbler-3', name: 'Bubbler 3ft', r: 3, gpm: 2.0, color: '#FF9800', category: 'bubbler' }
+    ];
+    
+    // Welcome screen
+    function startNewProject() {
+      document.getElementById('welcome-screen').classList.add('hidden');
+      setTimeout(() => {
+        document.getElementById('app').classList.add('visible');
+        draw();
+      }, 300);
+    }
+    
+    function importProject() {
+      document.getElementById('import-upload').click();
+    }
+    
+    // Draw function
+    let drawPending = false;
+    function draw() {
+      if (drawPending) return;
+      drawPending = true;
+      requestAnimationFrame(() => {
+        drawPending = false;
+        drawCanvas();
+      });
+    }
+    
+    function drawCanvas() {
+      // Clear
+      ctx.fillStyle = '#0f1419';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Background image
+      if (app.backgroundImage) {
+        ctx.globalAlpha = app.backgroundOpacity;
+        ctx.drawImage(app.backgroundImage, 0, 0, canvas.width, canvas.height);
+        ctx.globalAlpha = 1.0;
+      }
+      
+      // Grid
+      ctx.strokeStyle = 'rgba(139, 146, 167, 0.1)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x < canvas.width; x += 40) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, canvas.height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < canvas.height; y += 40) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(canvas.width, y);
+        ctx.stroke();
+      }
+      
+      // Boundary
+      if (app.boundaryPoints.length > 0) {
+        ctx.fillStyle = 'rgba(0, 191, 165, 0.1)';
+        ctx.strokeStyle = '#00bfa5';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(app.boundaryPoints[0].x, app.boundaryPoints[0].y);
+        app.boundaryPoints.forEach(p => ctx.lineTo(p.x, p.y));
+        if (app.boundaryPoints.length >= 3) {
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.stroke();
+        
+        // Points
+        app.boundaryPoints.forEach((p, i) => {
+          ctx.fillStyle = '#00bfa5';
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+      
+      // Mainlines
+      app.mainlines.forEach(mainline => {
+        if (mainline.points.length >= 2) {
+          ctx.strokeStyle = '#ff6b35';
+          ctx.lineWidth = 6;
+          ctx.setLineDash([10, 10]);
+          ctx.beginPath();
+          ctx.moveTo(mainline.points[0].x, mainline.points[0].y);
+          mainline.points.forEach(p => ctx.lineTo(p.x, p.y));
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      });
+      
+      // Current mainline
+      if (app.currentMainline.length > 0) {
+        ctx.strokeStyle = '#ff6b35';
+        ctx.lineWidth = 6;
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(app.currentMainline[0].x, app.currentMainline[0].y);
+        app.currentMainline.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      
+      // Laterals
+      app.laterals.forEach(lateral => {
+        if (lateral.points.length >= 2) {
+          ctx.strokeStyle = '#00c853';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(lateral.points[0].x, lateral.points[0].y);
+          lateral.points.forEach(p => ctx.lineTo(p.x, p.y));
+          ctx.stroke();
+        }
+      });
+      
+      // Current lateral
+      if (app.currentLateral.length > 0) {
+        ctx.strokeStyle = '#00c853';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(app.currentLateral[0].x, app.currentLateral[0].y);
+        app.currentLateral.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+      }
+      
+      // Drip beds
+      app.dripBeds.forEach(bed => {
+        if (bed.points.length >= 3) {
+          ctx.beginPath();
+          ctx.moveTo(bed.points[0].x, bed.points[0].y);
+          bed.points.forEach(p => ctx.lineTo(p.x, p.y));
+          ctx.closePath();
+          ctx.fillStyle = 'rgba(121, 85, 72, 0.3)';
+          ctx.fill();
+          ctx.strokeStyle = '#795548';
+          ctx.lineWidth = 4;
+          ctx.stroke();
+        }
+      });
+      
+      // Current drip bed
+      if (app.currentDripBed.length > 0) {
+        ctx.strokeStyle = '#795548';
+        ctx.lineWidth = 3;
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.moveTo(app.currentDripBed[0].x, app.currentDripBed[0].y);
+        app.currentDripBed.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      
+      // Valves
+      app.valves.forEach(valve => {
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(valve.x, valve.y, 12, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        
+        // X
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(valve.x - 6, valve.y - 6);
+        ctx.lineTo(valve.x + 6, valve.y + 6);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(valve.x + 6, valve.y - 6);
+        ctx.lineTo(valve.x - 6, valve.y + 6);
+        ctx.stroke();
+      });
+      
+      // Heads
+      app.heads.forEach(head => {
+        const eq = allEquipment.find(e => e.id === head.type);
+        if (!eq) return;
+        
+        // Coverage
+        ctx.strokeStyle = eq.color + '40';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, eq.r * 3, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        
+        // Head
+        ctx.fillStyle = eq.color;
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      });
+      
+      // Zones
+      app.zones.forEach((zone, i) => {
+        const colors = ['#2196F3', '#9C27B0', '#009688', '#FF9800', '#F44336', '#4CAF50'];
+        const color = colors[i % colors.length];
+        
+        zone.heads.forEach(headId => {
+          const head = app.heads.find(h => h.id === headId);
+          if (head) {
+            ctx.fillStyle = color + '20';
+            ctx.beginPath();
+            ctx.arc(head.x, head.y, 40, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        });
+      });
+    }
+    
+    // Canvas click
+    canvas.addEventListener('click', function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = canvas.width / rect.width;
+      const scaleY = canvas.height / rect.height;
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+      
+      if (app.mode === 'boundary') {
+        app.boundaryPoints.push({ x, y });
+        updateStats();
+        draw();
+      } else if (app.mode === 'mainline') {
+        app.currentMainline.push({ x, y });
+        draw();
+      } else if (app.mode === 'lateral') {
+        app.currentLateral.push({ x, y });
+        draw();
+      } else if (app.mode === 'drip') {
+        app.currentDripBed.push({ x, y });
+        draw();
+      } else if (app.mode === 'head' && app.selectedHead) {
+        app.heads.push({ x, y, type: app.selectedHead, id: 'head-' + Date.now() });
+        updateStats();
+        draw();
+        showMessage('Head placed', 'success');
+      } else if (app.mode === 'valve') {
+        app.valves.push({ x, y });
+        updateStats();
+        draw();
+        showMessage('Valve placed', 'success');
+      }
+    });
+    
+    // Navigation
+    document.querySelectorAll('.nav-item[data-mode]').forEach(item => {
+      item.addEventListener('click', function() {
+        const mode = this.getAttribute('data-mode');
+        console.log('🎯 Mode clicked:', mode);
+        app.mode = mode;
+        
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        this.classList.add('active');
+        
+        updateToolPanel();
+        updateInstructions();
+        
+        // FIXED: Show/hide equipment panel - direct and simple
+        const equipPanel = document.getElementById('equipment-panel');
+        console.log('📦 Panel element found:', equipPanel);
+        
+        if (mode === 'head') {
+          console.log('✅ SHOWING EQUIPMENT NOW');
+          if (equipPanel) {
+            equipPanel.style.display = 'block';
+            equipPanel.style.visibility = 'visible';
+            equipPanel.style.opacity = '1';
+            console.log('Panel display:', equipPanel.style.display);
+            populateEquipment();
+          } else {
+            console.error('❌ Equipment panel not found!');
+          }
+        } else {
+          console.log('Hiding equipment');
+          if (equipPanel) {
+            equipPanel.style.display = 'none';
+          }
+        }
+      });
+    });
+    
+    function updateToolPanel() {
+      const panel = document.getElementById('tool-panel');
+      
+      // Tool buttons based on mode
+      let tools = [];
+      if (app.mode === 'boundary') {
+        tools = [
+          { icon: '✓', label: 'Finish Boundary', action: 'finishBoundary' }
+        ];
+      } else if (app.mode === 'mainline') {
+        tools = [
+          { icon: '✓', label: 'Finish Mainline', action: 'finishMainline' }
+        ];
+      } else if (app.mode === 'lateral') {
+        tools = [
+          { icon: '✓', label: 'Finish Lateral', action: 'finishLateral' }
+        ];
+      } else if (app.mode === 'drip') {
+        tools = [
+          { icon: '✓', label: 'Finish Drip Bed', action: 'finishDripBed' }
+        ];
+      }
+      
+      panel.innerHTML = tools.map(t => `
+        <button class="tool-btn" onclick="${t.action}()">
+          <span class="icon">${t.icon}</span>
+          <span>${t.label}</span>
+        </button>
+      `).join('');
+    }
+    
+    function updateInstructions() {
+      const instructions = {
+        boundary: 'Click to add boundary points',
+        mainline: 'Click to draw mainline path',
+        lateral: 'Click to draw lateral line',
+        head: 'Select equipment type, then click to place',
+        valve: 'Click to place valve boxes',
+        drip: 'Click to outline drip bed area'
+      };
+      document.getElementById('instruction-text').textContent = instructions[app.mode] || 'Select a tool';
+    }
+    
+    function populateEquipment() {
+      console.log('🎨 populateEquipment called');
+      const grid = document.getElementById('equipment-grid');
+      console.log('📦 Grid element:', grid);
+      console.log('🔧 All equipment count:', allEquipment.length);
+      
+      // Group equipment by category
+      const categories = {
+        'Sprays': allEquipment.filter(e => e.category === 'spray'),
+        'Rotors': allEquipment.filter(e => e.category === 'rotor'),
+        'MP Rotary': allEquipment.filter(e => e.category === 'mp'),
+        'Bubblers': allEquipment.filter(e => e.category === 'bubbler')
+      };
+      
+      console.log('📊 Categories:', categories);
+      
+      let html = '';
+      Object.entries(categories).forEach(([category, items]) => {
+        if (items.length > 0) {
+          html += `<div style="grid-column: 1 / -1; font-size: 11px; font-weight: 600; color: var(--text-secondary); margin-top: 12px; padding: 4px 0; border-bottom: 1px solid var(--border-color);">${category}</div>`;
+          items.forEach(eq => {
+            html += `
+              <div class="equipment-card ${app.selectedHead === eq.id ? 'selected' : ''}" 
+                   onclick="selectEquipment('${eq.id}')">
+                <div class="eq-icon" style="background: ${eq.color}"></div>
+                <div class="eq-name">${eq.r}ft</div>
+                <div class="eq-info">${eq.gpm} GPM</div>
+              </div>
+            `;
+          });
+        }
+      });
+      
+      console.log('📝 HTML length:', html.length);
+      grid.innerHTML = html;
+      console.log('✅ Equipment grid populated');
+    }
+    
+    function selectEquipment(id) {
+      app.selectedHead = id;
+      populateEquipment();
+    }
+    
+    // Helper function to force show equipment (for debugging)
+    function forceShowEquipment() {
+      console.log('🔧 FORCE SHOWING EQUIPMENT');
+      const panel = document.getElementById('equipment-panel');
+      if (panel) {
+        panel.style.display = 'block';
+        panel.style.visibility = 'visible';
+        populateEquipment();
+        console.log('✅ Equipment forced visible');
+      } else {
+        console.error('❌ Panel not found');
+      }
+    }
+    
+    function finishBoundary() {
+      if (app.boundaryPoints.length >= 3) {
+        showMessage('Boundary complete!', 'success');
+        app.mode = 'head';
+        updateToolPanel();
+      }
+    }
+    
+    function finishMainline() {
+      if (app.currentMainline.length >= 2) {
+        app.mainlines.push({
+          points: [...app.currentMainline],
+          size: app.selectedMainlineSize
+        });
+        app.currentMainline = [];
+        draw();
+        showMessage('Mainline complete!', 'success');
+      }
+    }
+    
+    function finishLateral() {
+      if (app.currentLateral.length >= 2) {
+        app.laterals.push({
+          points: [...app.currentLateral],
+          size: app.selectedLateralSize
+        });
+        app.currentLateral = [];
+        draw();
+        showMessage('Lateral complete!', 'success');
+      }
+    }
+    
+    function finishDripBed() {
+      if (app.currentDripBed.length >= 3) {
+        app.dripBeds.push({
+          points: [...app.currentDripBed]
+        });
+        app.currentDripBed = [];
+        draw();
+        showMessage('Drip bed complete!', 'success');
+      }
+    }
+    
+    function generateZones() {
+      if (app.heads.length === 0) {
+        showMessage('Place some heads first', 'alert');
+        return;
+      }
+      
+      // Simple zone generation (group by proximity and GPM)
+      const maxGPM = 12;
+      app.zones = [];
+      const unassigned = [...app.heads];
+      
+      while (unassigned.length > 0) {
+        const zone = { heads: [], gpm: 0 };
+        const seed = unassigned[0];
+        zone.heads.push(seed.id);
+        const seedEq = allEquipment.find(e => e.id === seed.type);
+        zone.gpm += seedEq.gpm;
+        unassigned.splice(0, 1);
+        
+        // Add nearby heads
+        for (let i = unassigned.length - 1; i >= 0; i--) {
+          const head = unassigned[i];
+          const eq = allEquipment.find(e => e.id === head.type);
+          if (zone.gpm + eq.gpm <= maxGPM) {
+            zone.heads.push(head.id);
+            zone.gpm += eq.gpm;
+            unassigned.splice(i, 1);
+          }
+        }
+        
+        app.zones.push(zone);
+      }
+      
+      updateStats();
+      draw();
+      showMessage(`Generated ${app.zones.length} zones`, 'success');
+    }
+    
+    function showMaterials() {
+      // Calculate materials
+      const headsByType = {};
+      let totalGPM = 0;
+      
+      app.heads.forEach(head => {
+        const eq = allEquipment.find(e => e.id === head.type);
+        if (eq) {
+          if (!headsByType[eq.name]) {
+            headsByType[eq.name] = { count: 0, gpm: eq.gpm, cost: 0 };
+          }
+          headsByType[eq.name].count++;
+          totalGPM += eq.gpm;
+        }
+      });
+      
+      Object.keys(headsByType).forEach(name => {
+        const item = headsByType[name];
+        if (name.includes('Spray')) item.cost = item.count * 8;
+        else if (name.includes('Rotor')) item.cost = item.count * 25;
+        else if (name.includes('MP')) item.cost = item.count * 12;
+        else if (name.includes('Bubbler')) item.cost = item.count * 15;
+      });
+      
+      const pipeLength = app.heads.length * 15;
+      const pipeCost = pipeLength * 0.50;
+      const valveCost = app.valves.length * 75;
+      const materialsCost = Object.values(headsByType).reduce((sum, item) => sum + item.cost, 0) + pipeCost + valveCost;
+      const laborCost = materialsCost * 0.4;
+      
+      // Display
+      let html = '<div style="font-size: 14px;">';
+      html += '<div style="background: var(--card-bg); padding: 20px; border-radius: 12px; margin-bottom: 20px;">';
+      html += '<h3 style="margin-bottom: 16px;">Summary</h3>';
+      html += `<p><strong>Total Heads:</strong> ${app.heads.length}</p>`;
+      html += `<p><strong>Total GPM:</strong> ${totalGPM.toFixed(1)}</p>`;
+      html += `<p><strong>Valves:</strong> ${app.valves.length}</p>`;
+      html += `<p><strong>Zones:</strong> ${app.zones.length}</p>`;
+      html += '</div>';
+      
+      html += '<h3 style="margin: 20px 0 12px;">Equipment</h3>';
+      Object.entries(headsByType).forEach(([name, item]) => {
+        html += `<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color);">`;
+        html += `<span>${name}: ${item.count}</span>`;
+        html += `<span>$${item.cost.toFixed(2)}</span>`;
+        html += `</div>`;
+      });
+      
+      html += `<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color);">`;
+      html += `<span>Pipe: ${pipeLength} ft</span>`;
+      html += `<span>$${pipeCost.toFixed(2)}</span>`;
+      html += `</div>`;
+      
+      html += `<div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color);">`;
+      html += `<span>Valves: ${app.valves.length}</span>`;
+      html += `<span>$${valveCost.toFixed(2)}</span>`;
+      html += `</div>`;
+      
+      html += '<div style="margin-top: 24px; padding: 20px; background: var(--card-bg); border-radius: 12px;">';
+      html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Materials:</span><strong>$${materialsCost.toFixed(2)}</strong></div>`;
+      html += `<div style="display: flex; justify-content: space-between; margin-bottom: 8px;"><span>Labor:</span><strong>$${laborCost.toFixed(2)}</strong></div>`;
+      html += `<div style="display: flex; justify-content: space-between; font-size: 18px; padding-top: 12px; border-top: 2px solid var(--border-color);"><span>Total:</span><strong style="color: var(--primary-blue);">$${(materialsCost + laborCost).toFixed(2)}</strong></div>`;
+      html += '</div>';
+      html += '</div>';
+      
+      document.getElementById('materials-content').innerHTML = html;
+      document.getElementById('materials-modal').classList.add('show');
+    }
+    
+    function exportPDF() {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF();
+      
+      doc.setFontSize(20);
+      doc.text('HydroBuild Pro - Design', 20, 20);
+      
+      const canvasImg = canvas.toDataURL('image/png');
+      doc.addImage(canvasImg, 'PNG', 20, 30, 170, 100);
+      
+      doc.save('hydrobuild-design.pdf');
+      showMessage('PDF exported!', 'success');
+    }
+    
+    function updateStats() {
+      document.getElementById('stat-boundary').textContent = app.boundaryPoints.length;
+      document.getElementById('stat-heads').textContent = app.heads.length;
+      document.getElementById('stat-valves').textContent = app.valves.length;
+      document.getElementById('stat-zones').textContent = app.zones.length;
+    }
+    
+    function loadAddress() {
+      document.getElementById('address-modal').classList.add('show');
+    }
+    
+    function loadAddressConfirm() {
+      showMessage('Feature coming soon - use Upload Plot Plan for now', 'alert');
+      closeModal('address-modal');
+    }
+    
+    function uploadPlotPlan() {
+      document.getElementById('file-upload').click();
+    }
+    
+    document.getElementById('file-upload').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+        img.onload = function() {
+          app.backgroundImage = img;
+          draw();
+          showMessage('Background loaded! Use +/- keys to adjust opacity', 'success');
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+    
+    function saveProject() {
+      const data = {
+        version: '3.0',
+        boundaryPoints: app.boundaryPoints,
+        heads: app.heads,
+        valves: app.valves,
+        zones: app.zones,
+        dripBeds: app.dripBeds,
+        mainlines: app.mainlines,
+        laterals: app.laterals,
+        timestamp: new Date().toISOString()
+      };
+      
+      const json = JSON.stringify(data);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'hydrobuild-project.json';
+      a.click();
+      
+      showMessage('Project saved!', 'success');
+    }
+    
+    function undoAction() {
+      if (app.mode === 'boundary' && app.boundaryPoints.length > 0) {
+        app.boundaryPoints.pop();
+      } else if (app.mode === 'head' && app.heads.length > 0) {
+        app.heads.pop();
+      } else if (app.mode === 'valve' && app.valves.length > 0) {
+        app.valves.pop();
+      }
+      updateStats();
+      draw();
+    }
+    
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('show');
+    }
+    
+    function showMessage(text, type) {
+      const msg = document.getElementById('message');
+      msg.textContent = text;
+      msg.className = 'message show ' + type;
+      setTimeout(() => msg.classList.remove('show'), 3000);
+    }
+    
+    // Keyboard shortcuts
+    document.addEventListener('keydown', function(e) {
+      if (app.backgroundImage) {
+        if (e.key === '+' || e.key === '=') {
+          app.backgroundOpacity = Math.min(1, app.backgroundOpacity + 0.1);
+          draw();
+        } else if (e.key === '-' || e.key === '_') {
+          app.backgroundOpacity = Math.max(0, app.backgroundOpacity - 0.1);
+          draw();
+        }
+      }
+    });
+    
+    // Modal close on background click
+    document.querySelectorAll('.modal').forEach(modal => {
+      modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          this.classList.remove('show');
+        }
+      });
+    });
+    
+    // Initialize
+    updateInstructions();
+    updateToolPanel();
+    draw();
+    console.log('✅ HydroBuild Pro ready!');
+  </script>
+</body>
+</html>
